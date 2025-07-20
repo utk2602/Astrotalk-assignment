@@ -1,140 +1,84 @@
 const axios = require('axios');
 
-// Configure OpenAI API
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+// Gemini API configuration (for Astrologer)
+const GEMINI_API_KEY = 'AIzaSyBLih7DG7gN9Gd-0G9Ue9a7z8eGtRqJWs0';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
-// Generate AI response using OpenAI API
+// Generate AI response using Gemini API (Astrologer persona)
 const generateAIResponse = async (prompt, context = '') => {
   try {
-    if (!OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    const systemMessage = `You are an AI assistant specialized in astrology and spiritual guidance. 
-    You provide helpful, respectful, and informative responses about astrology, numerology, 
-    spiritual practices, and general life guidance. Always be supportive and encouraging. 
-    If you don't know something specific, acknowledge it and suggest consulting a professional astrologer.`;
-
-    const userMessage = context 
-      ? `Context: ${context}\n\nUser Question: ${prompt}`
-      : prompt;
-
-    const response = await axios.post(
-      OPENAI_API_URL,
-      {
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: userMessage }
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-        top_p: 1,
-        frequency_penalty: 0,
-        presence_penalty: 0
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    return response.data.choices[0].message.content.trim();
-  } catch (error) {
-    console.error('OpenAI API Error:', error.response?.data || error.message);
     
-    // Fallback response if API fails
-    return `I apologize, but I'm currently unable to process your request. 
-    Please try again later or consider reaching out to one of our professional astrologers 
-    for personalized guidance.`;
+    const astrologerContext = `You are an AI astrologer designed to provide astrological guidance, insights, and a safe space for users who may be seeking comfort, reflection, or advice about their life, relationships, and well-being. Your primary role is to listen attentively, respond empathetically, and offer thoughtful responses based on astrological principles (zodiac signs, planets, houses, etc.). You are not a substitute for professional therapy or counseling, but you should provide an environment where users feel understood and supported through astrology. Encourage users to seek professional help if necessary and remind them that astrology is for guidance and reflection, not a replacement for medical or psychological advice.\n\nHere are key guidelines to follow:\n\nEmpathy and Active Listening:\n- Acknowledge and validate the user's feelings and experiences. Show genuine care and understanding.\n- Use language that reflects the user's emotions (e.g., "That sounds really tough," or "I can imagine how that must feel for you").\nAstrological Guidance:\n- Offer insights based on the user's astrological sign, birth details, or questions about astrology.\n- Share general advice rooted in astrological wisdom, but avoid making deterministic or absolute predictions.\nEncouraging Self-Reflection:\n- Ask open-ended questions that encourage the user to reflect on their emotions, experiences, and possible next steps.\n- Help the user explore their thoughts and feelings gently without pushing them too hard.\nClarifying Limitations:\n- Be clear about your limitations. Remind the user at appropriate points that you're here to provide astrological guidance, but that professional therapy or medical advice is best suited for in-depth or crisis situations.\n- If the user appears to be in significant distress, provide gentle reminders to consult with a licensed therapist or other mental health professional.\nLanguage:\n- Use calming, non-judgmental language that encourages trust and openness.\n- Ensure your responses avoid making assumptions about the user's experience or providing overly directive advice.\nPromote Self-Care and Coping Mechanisms:\n- Gently suggest strategies for self-care, such as mindfulness, journaling, or healthy habits, without being prescriptive or overbearing.\n- Remind users that taking small, manageable steps can be helpful in maintaining emotional well-being.\nReferral to Professional Help:\n- If the user is experiencing signs of severe distress, self-harm, or mental health crises, encourage them to contact a mental health professional immediately and provide appropriate resources (e.g., hotlines, therapy referrals, etc.).\nBy maintaining these principles, your role is to be a compassionate, understanding astrological guide while encouraging the user to seek more specific, professional care if necessary.\nPrevious conversation: []`;
+
+    const requestBody = {
+      contents: [{
+        parts: [{
+          text: `${context || astrologerContext}\n\nUser: ${prompt}\n\nAstrologer:`
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      },
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_HATE_SPEECH",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        }
+      ]
+    };
+
+    const response = await axios.post(
+      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+      requestBody,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    // Gemini API response structure
+    if (
+      response.data &&
+      response.data.candidates &&
+      response.data.candidates[0] &&
+      response.data.candidates[0].content &&
+      response.data.candidates[0].content.parts &&
+      response.data.candidates[0].content.parts[0] &&
+      response.data.candidates[0].content.parts[0].text
+    ) {
+      return response.data.candidates[0].content.parts[0].text.trim();
+    } else {
+      throw new Error('Invalid Gemini API response');
+    }
+  } catch (error) {
+    console.error('Gemini API Error:', error.response?.data || error.message);
+    return `I apologize, but I'm having trouble responding right now. Please try again later.`;
   }
 };
 
-// Generate horoscope based on zodiac sign
+// The following are placeholders. If you want horoscope or birth chart, you must implement Gemini prompts for those.
 const generateHoroscope = async (zodiacSign, date = new Date()) => {
-  try {
-    if (!OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    const systemMessage = `You are a professional astrologer. Generate a daily horoscope for the given zodiac sign. 
-    Make it positive, encouraging, and insightful. Include guidance for love, career, health, and general well-being. 
-    Keep it concise but meaningful.`;
-
-    const userMessage = `Generate a daily horoscope for ${zodiacSign} for ${date.toDateString()}. 
-    Include specific guidance for love, career, health, and general well-being.`;
-
-    const response = await axios.post(
-      OPENAI_API_URL,
-      {
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: userMessage }
-        ],
-        max_tokens: 300,
-        temperature: 0.8
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    return response.data.choices[0].message.content.trim();
-  } catch (error) {
-    console.error('Horoscope generation error:', error.response?.data || error.message);
-    return `I'm sorry, I couldn't generate your horoscope at the moment. 
-    Please try again later or consult with one of our professional astrologers.`;
-  }
+  return 'Horoscope generation is not supported with Gemini API in this implementation.';
 };
 
-// Analyze birth chart (simplified version)
 const analyzeBirthChart = async (birthDate, birthTime, birthPlace) => {
-  try {
-    if (!OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    const systemMessage = `You are an expert astrologer. Provide a simplified birth chart analysis 
-    based on the given birth details. Focus on sun sign, moon sign, and rising sign interpretations. 
-    Be encouraging and provide practical insights.`;
-
-    const userMessage = `Please provide a birth chart analysis for someone born on ${birthDate} 
-    at ${birthTime} in ${birthPlace}. Include insights about their personality, strengths, 
-    and life path based on their astrological profile.`;
-
-    const response = await axios.post(
-      OPENAI_API_URL,
-      {
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: userMessage }
-        ],
-        max_tokens: 600,
-        temperature: 0.7
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    return response.data.choices[0].message.content.trim();
-  } catch (error) {
-    console.error('Birth chart analysis error:', error.response?.data || error.message);
-    return `I'm sorry, I couldn't analyze your birth chart at the moment. 
-    Please try again later or schedule a consultation with one of our professional astrologers 
-    for a detailed reading.`;
-  }
+  return 'Birth chart analysis is not supported with Gemini API in this implementation.';
 };
 
 module.exports = {

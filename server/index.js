@@ -50,6 +50,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static files
 app.use('/uploads', express.static('uploads'));
 
+// Root route for API base
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Welcome to the Astrotalk API! Server is running.'
+  });
+});
+
 // Health check route
 app.get('/health', (req, res) => {
   res.json({

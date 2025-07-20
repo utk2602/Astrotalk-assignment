@@ -22,4 +22,6 @@ router.put('/avatar', auth, upload.single('avatar'), updateAvatar);
 router.patch('/status/:id', auth, updateStatus);
 router.get('/stats', auth, getUserStats);
 
+module.exports = router;
+
  
