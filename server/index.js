@@ -1,112 +1,31 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-
-// Load environment variables
-dotenv.config();
-
-// Import database connection
-const connectDB = require('./config/db');
-
-// Import middleware
-const { errorHandler, notFound } = require('./middleware/errorHandler');
-
-// Import routes
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const messageRoutes = require('./routes/messageRoutes');
-const aiRoutes = require('./routes/aiRoutes');
-const callRoutes = require('./routes/callRoutes');
-
-// Import socket handlers
-const { setupSocketHandlers } = require('./sockets/socketHandlers');
-
-// Initialize express app
+const express = require("express");
+const connectDB = require("./db.js");
+const cors = require("cors");
+const http = require("http");
+const PORT = 5000;
+const { initSocket } = require("./socket/index.js");
 const app = express();
-const server = createServer(app);
+app.use(cors());
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.json({ limit: "50mb" }));
 
-// Initialize Socket.IO
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+// Routes
+app.get("/", (req, res) => {
+  res.send("Hello World");
 });
+app.use("/auth", require("./Routes/auth_routes.js"));
+app.use("/user", require("./Routes/userRoutes.js"));
+app.use("/message", require("./Routes/message_routes.js"));
+app.use("/conversation", require("./Routes/conversation_routes.js"));
 
-// Connect to MongoDB
-connectDB();
+// Server setup
+const server = http.createServer(app);
 
-// Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
-  credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Socket.io setup
+initSocket(server); // Initialize socket.io logic
 
-// Static files
-app.use('/uploads', express.static('uploads'));
-
-// Root route for API base
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Welcome to the Astrotalk API! Server is running.'
-  });
-});
-
-// Health check route
-app.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/calls', callRoutes);
-
-// Setup Socket.IO handlers
-setupSocketHandlers(io);
-
-// 404 handler
-app.use(notFound);
-
-// Error handler
-app.use(errorHandler);
-
-// Start server
-const PORT = process.env.PORT || 5000;
-
+// Start server and connect to database
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
-  console.log(`🗄️  Database: ${process.env.MONGODB_URI || 'mongodb://localhost:27017/astrotalk'}`);
+  console.log(`🚀 Server started at http://localhost:${PORT}`);
+  connectDB();
 });
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-  });
-});
-
-module.exports = { app, server, io }; 
