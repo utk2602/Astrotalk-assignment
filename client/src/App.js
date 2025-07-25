@@ -2,8 +2,11 @@ import "./App.css";
 import { useColorMode } from "@chakra-ui/react";
 import Navbar from "./components/Navbar/Navbar";
 import ChatState from "./context/appState";
+import { CallProvider } from "./context/CallContext";
 import { useContext } from "react";
 import chatContext from "./context/chatContext";
+import CallModal from "./components/Call/CallModal";
+import IncomingCallNotification from "./components/Call/IncomingCallNotification";
 
 function App(props) {
   const { toggleColorMode } = useColorMode();
@@ -11,7 +14,11 @@ function App(props) {
 
   return (
     <div className="App">
-      <Navbar toggleColorMode={toggleColorMode} context={context} />
+      <CallProvider>
+        <Navbar toggleColorMode={toggleColorMode} context={context} />
+        <CallModal />
+        <IncomingCallNotification />
+      </CallProvider>
     </div>
   );
 }

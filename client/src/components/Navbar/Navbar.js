@@ -1,13 +1,29 @@
 import React, { useContext, useState } from "react";
-import { Box, Button, Flex, Text, Link, useDisclosure } from "@chakra-ui/react";
-import { FaGithub, FaMoon, FaSun } from "react-icons/fa";
+import { 
+  Box, 
+  Button, 
+  Flex, 
+  Text, 
+  Link, 
+  useDisclosure,
+  IconButton,
+  Tooltip 
+} from "@chakra-ui/react";
+import { FaGithub, FaMoon, FaSun, FaHistory } from "react-icons/fa";
 import ProfileMenu from "./ProfileMenu";
 import chatContext from "../../context/chatContext";
+import CallHistoryModal from "../Call/CallHistoryModal";
 
 const Navbar = (props) => {
   const context = useContext(chatContext);
   const { isAuthenticated } = context;
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { 
+    isOpen: isCallHistoryOpen, 
+    onOpen: onCallHistoryOpen, 
+    onClose: onCallHistoryClose 
+  } = useDisclosure();
+  
   const colormode = localStorage.getItem("chakra-ui-color-mode");
   const [icon, seticon] = useState(
     colormode === "dark" ? <FaSun /> : <FaMoon />
@@ -104,12 +120,36 @@ const Navbar = (props) => {
             >
               <FaGithub />
             </Button>
+            
+            {/* Call History Button */}
+            {isAuthenticated && (
+              <Tooltip label="Call History" placement="bottom">
+                <IconButton
+                  borderRadius={"full"}
+                  borderWidth={1}
+                  fontSize={"small"}
+                  backgroundColor={"transparent"}
+                  p={3}
+                  mr={2}
+                  icon={<FaHistory />}
+                  onClick={onCallHistoryOpen}
+                  aria-label="Call History"
+                />
+              </Tooltip>
+            )}
+            
             {isAuthenticated && (
               <ProfileMenu isOpen={isOpen} onOpen={onOpen} onClose={onClose} />
             )}
           </Box>
         </Flex>
       </Box>
+
+      {/* Call History Modal */}
+      <CallHistoryModal 
+        isOpen={isCallHistoryOpen} 
+        onClose={onCallHistoryClose} 
+      />
     </>
   );
 };

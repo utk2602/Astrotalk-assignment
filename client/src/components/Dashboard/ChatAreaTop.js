@@ -9,12 +9,14 @@ import {
   Skeleton,
   Circle,
   Stack,
+  HStack,
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import React, { useContext, useEffect } from "react";
 import chatContext from "../../context/chatContext";
 import { ProfileModal } from "../miscellaneous/ProfileModal";
 import { useDisclosure } from "@chakra-ui/react";
+import CallButtons from "../Call/CallButtons";
 
 const ChatAreaTop = () => {
   const context = useContext(chatContext);
@@ -87,6 +89,10 @@ const ChatAreaTop = () => {
   useEffect(() => {
     getReceiverOnlineStatus();
   }, [receiver?._id]);
+
+  // Don't show call buttons for bot users
+  const showCallButtons = receiver?.email && !receiver.email.includes("bot");
+
   return (
     <>
       <Flex w={"100%"}>
@@ -158,6 +164,17 @@ const ChatAreaTop = () => {
                     )}
                   </Stack>
                 </Flex>
+
+                {/* Call Buttons */}
+                {showCallButtons && (
+                  <HStack spacing={2} mr={2}>
+                    <CallButtons 
+                      receiverId={receiver._id}
+                      conversationId={activeChatId}
+                      size="sm"
+                    />
+                  </HStack>
+                )}
               </>
             )}
           </Button>
