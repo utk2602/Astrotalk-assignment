@@ -11,12 +11,14 @@ app.use(express.json({ limit: "50mb" }));
 
 // Routes
 app.get("/", (req, res) => {
-  res.send("Hello World");
+  res.send("Hello World - Conversa Chat & Call Server");
 });
+
 app.use("/auth", require("./Routes/auth_routes.js"));
 app.use("/user", require("./Routes/userRoutes.js"));
 app.use("/message", require("./Routes/message_routes.js"));
 app.use("/conversation", require("./Routes/conversation_routes.js"));
+app.use("/call", require("./Routes/call_routes.js"));
 
 // Server setup
 const server = http.createServer(app);
@@ -27,5 +29,6 @@ initSocket(server); // Initialize socket.io logic
 // Start server and connect to database
 server.listen(PORT, () => {
   console.log(`🚀 Server started at http://localhost:${PORT}`);
+  console.log(`📞 Call functionality enabled`);
   connectDB();
 });
