@@ -115,7 +115,7 @@ const Navbar = (props) => {
               p={3}
               mr={2}
               onClick={() => {
-                window.open("https://github.com/pankil-soni");
+                window.open("https://github.com/utk2602");
               }}
             >
               <FaGithub />
